@@ -1,0 +1,174 @@
+---
+import Header from "../components/Header.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+interface Pokemon {
+  id: number;
+  name: string;
+  type: string;
+  sprite: string;
+}
+
+interface apiRes {
+  characters: Pokemon[];
+  next: string;
+  prev: string;
+}
+
+const res = await fetch("http://localhost:3005/api/v1/pokedex/1");
+const { characters, next }: apiRes = await res.json();
+---
+
+<BaseLayout title="Pokedex -> Astrojs">
+  <main>
+    <Header />
+    <section class="pokedex-section" id="pokedex-section">
+      {
+        characters.map((obj) => (
+          <div class="pokedex-card" data-type={obj.type}>
+            <h3>{obj.name}</h3>
+            <img src={obj.sprite} alt="pokedex character" />
+            <strong>{obj.type}</strong>
+          </div>
+        ))
+      }
+    </section>
+  </main>
+</BaseLayout>
+
+<style is:global>
+  .pokedex-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    justify-items: center;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 10px;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .pokedex-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0px 0px 16px 0px rgba(0, 0, 0, 0.5);
+    min-height: 305px;
+    max-width: 200px;
+    padding: 8px;
+    width: 100%;
+  }
+
+  .pokedex-card strong {
+    margin: 10px 0;
+  }
+
+  .pokedex-card img {
+    width: 90%;
+    height: auto;
+    display: block;
+  }
+
+  .pokedex-card[data-type="fighting"],
+  .pokedex-card[data-type="normal"],
+  .pokedex-card[data-type="flying"],
+  .pokedex-card[data-type="fairy"],
+  .pokedex-card[data-type="ghost"] {
+    background-color: hsl(0, 0%, 95%);
+  }
+
+  .pokedex-card[data-type="water"] {
+    background-color: hsl(240, 100%, 95%);
+  }
+
+  .pokedex-card[data-type="ice"] {
+    background-color: hsl(195, 53%, 95%);
+  }
+
+  .pokedex-card[data-type="grass"] {
+    background-color: hsl(120, 100%, 95%);
+  }
+
+  .pokedex-card[data-type="fire"],
+  .pokedex-card[data-type="dragon"] {
+    background-color: hsl(0, 68%, 95%);
+  }
+
+  .pokedex-card[data-type="ground"],
+  .pokedex-card[data-type="bug"] {
+    background-color: hsl(0, 59%, 95%);
+  }
+
+  .pokedex-card[data-type="rock"],
+  .pokedex-card[data-type="steel"] {
+    background-color: hsl(0, 0%, 95%);
+  }
+
+  .pokedex-card[data-type="electric"] {
+    background-color: hsl(60, 100%, 95%);
+  }
+
+  .pokedex-card[data-type="psychic"],
+  .pokedex-card[data-type="poison"] {
+    background-color: hsl(300, 100%, 95%);
+  }
+
+  .pokedex-card[data-type="dark"] {
+    background-color: hsl(0, 0%, 95%);
+  }
+</style>
+
+<script define:vars={{ next }}>
+  const prevPokedexButton = document.getElementById("prev-pokedex");
+  const nextPokedexButton = document.getElementById("next-pokedex");
+
+  const handleActionButtons = (prevUrl, nextUrl) => {
+    if (!prevUrl) prevPokedexButton.setAttribute("disabled", "");
+    if (!nextUrl) nextPokedexButton.setAttribute("disabled", "");
+    if (prevUrl) prevPokedexButton.removeAttribute("disabled");
+    if (nextUrl) nextPokedexButton.removeAttribute("disabled");
+  };
+
+  const renderPokedex = (data) => {
+    const container = document.getElementById("pokedex-section");
+    const { characters, prev, next } = data;
+    handleActionButtons(prev, next);
+    prevFetchUrl = prev;
+    nextFetchUrl = next;
+    if (container) {
+      container.innerHTML = "";
+      const newPokedexContent = characters.map((obj) => {
+        return `
+          <div class="pokedex-card" data-type=${obj.type}>
+            <h3>${obj.name}</h3>
+            <img src=${obj.sprite} alt="pokedex character" />
+            <strong>${obj.type}</strong>
+          </div>
+        `;
+      });
+      container.innerHTML = newPokedexContent.join("");
+    }
+  };
+
+  let prevFetchUrl = "";
+  let nextFetchUrl = next;
+
+  handleActionButtons(prevFetchUrl, nextFetchUrl);
+
+  nextPokedexButton.addEventListener("click", () => {
+    if (nextFetchUrl) {
+      fetch(nextFetchUrl)
+        .then((response) => response.json())
+        .then((data) => renderPokedex(data));
+    }
+  });
+
+  prevPokedexButton.addEventListener("click", () => {
+    if (prevFetchUrl) {
+      fetch(prevFetchUrl)
+        .then((response) => response.json())
+        .then((data) => renderPokedex(data));
+    }
+  });
+</script>
